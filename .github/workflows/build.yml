@@ -1,0 +1,62 @@
+name: Build APK
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - uses: android-actions/setup-android@v3
+
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.7'
+
+      - name: Signing key
+        env:
+          SIGNING_KEY_B64: ${{ secrets.SIGNING_KEY_B64 }}
+          SIGNING_PASSWORD: ${{ secrets.SIGNING_PASSWORD }}
+        run: |
+          mkdir -p signing
+          if [ -n "$SIGNING_KEY_B64" ] && [ -n "$SIGNING_PASSWORD" ]; then
+            echo "$SIGNING_KEY_B64" | base64 -d > signing/tvhome.jks
+          else
+            keytool -genkeypair -keystore signing/tvhome.jks -storepass android -keypass android \
+              -alias tvhome -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=TV Home"
+            echo "::warning::No SIGNING_KEY_B64 / SIGNING_PASSWORD secrets: built with a throwaway key, so the next build will need an uninstall before it can be installed."
+          fi
+
+      - name: Build release APK
+        env:
+          SIGNING_PASSWORD: ${{ secrets.SIGNING_PASSWORD }}
+        run: gradle :app:assembleRelease --no-daemon --stacktrace
+
+      - name: Name the APK
+        run: cp app/build/outputs/apk/release/app-release.apk tv-home.apk
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: tv-home
+          path: tv-home.apk
+
+      - name: Publish to the "latest" release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: latest
+          name: TV Home (latest build)
+          body: Install tv-home.apk on the TV. Built from ${{ github.sha }}.
+          files: tv-home.apk
+          make_latest: true

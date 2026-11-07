@@ -1,0 +1,46 @@
+plugins {
+    id 'com.android.application'
+}
+
+android {
+    namespace 'com.clive.tvhome'
+    compileSdk 34
+
+    defaultConfig {
+        applicationId 'com.clive.tvhome'
+        minSdk 21
+        // 28 keeps package visibility open so the launcher can list every installed app
+        targetSdk 28
+        versionCode 1
+        versionName '1.0'
+    }
+
+    // Signing key: written to signing/tvhome.jks by the GitHub workflow (from the repo
+    // secret SIGNING_KEY_B64), never committed. Password comes from SIGNING_PASSWORD.
+    def keyPass = System.getenv('SIGNING_PASSWORD') ?: 'android'
+    signingConfigs {
+        sideload {
+            storeFile rootProject.file('signing/tvhome.jks')
+            storePassword keyPass
+            keyAlias 'tvhome'
+            keyPassword keyPass
+        }
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            signingConfig signingConfigs.sideload
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+
+    lint {
+        abortOnError false
+        checkReleaseBuilds false
+    }
+}

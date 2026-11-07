@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+<title>TV Home</title>
+<link rel="stylesheet" href="app.css">
+</head>
+<body>
+<div id="stage">
+
+  <section id="home">
+    <div id="wp"></div>
+    <div class="shade-top"></div>
+    <div class="shade-bot"></div>
+    <div id="veil" aria-hidden="true"></div>
+
+    <nav id="topbar" aria-label="Home controls">
+      <button class="u" id="btnWifi" data-k="top:0" aria-label="Wi-Fi networks" tabindex="-1">
+        <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path id="wifiGlyph" d="M2 9a15 15 0 0120 0 M5.5 12.5a10 10 0 0113 0 M9 16a5 5 0 016 0 M12 19.5h.01"></path></svg>
+      </button>
+      <button class="u" id="btnSettings" data-k="top:1" aria-label="Settings" tabindex="-1">
+        <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15a3 3 0 100-6 3 3 0 000 6z M19.4 15a1.7 1.7 0 00.3 1.8l.1.1a2 2 0 11-2.8 2.8l-.1-.1a1.7 1.7 0 00-1.8-.3 1.7 1.7 0 00-1 1.5V21a2 2 0 11-4 0v-.1a1.7 1.7 0 00-1.1-1.5 1.7 1.7 0 00-1.8.3l-.1.1a2 2 0 11-2.8-2.8l.1-.1a1.7 1.7 0 00.3-1.8 1.7 1.7 0 00-1.5-1H3a2 2 0 110-4h.1a1.7 1.7 0 001.5-1.1 1.7 1.7 0 00-.3-1.8l-.1-.1a2 2 0 112.8-2.8l.1.1a1.7 1.7 0 001.8.3H9a1.7 1.7 0 001-1.5V3a2 2 0 114 0v.1a1.7 1.7 0 001 1.5 1.7 1.7 0 001.8-.3l.1-.1a2 2 0 112.8 2.8l-.1.1a1.7 1.7 0 00-.3 1.8V9a1.7 1.7 0 001.5 1H21a2 2 0 110 4h-.1a1.7 1.7 0 00-1.5 1z"></path></svg>
+      </button>
+    </nav>
+
+    <div id="clock"><span id="clockText"></span></div>
+
+    <div id="wifiPop" role="dialog" aria-label="Wi-Fi networks">
+      <div class="wifi-head">Wi-Fi<span id="wifiStatus"></span></div>
+      <div id="wifiList"></div>
+    </div>
+
+    <div id="slide">
+      <div id="dock">
+        <div id="dockGlass" aria-hidden="true"></div>
+        <div id="shelf"><div id="track"></div></div>
+      </div>
+      <button class="u cue" id="cueDown" data-k="cue:down" aria-label="Show all apps" tabindex="-1">
+        <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"></path></svg>
+      </button>
+      <div id="allLabel">All apps</div>
+      <div id="gridWrap"><div id="grid"></div></div>
+    </div>
+
+    <button class="u cue" id="cueUp" data-k="cue:up" aria-label="Back to Home" tabindex="-1">
+      <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 15l6-6 6 6"></path></svg>
+    </button>
+  </section>
+
+  <div id="screens"></div>
+</div>
+
+<script src="brands.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

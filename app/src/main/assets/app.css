@@ -1,0 +1,287 @@
+/* TV Home: a 1:1 port of the "TV Home Launcher" design (Home, Settings, Wallpaper, Apps on Home).
+   The stage is laid out at 1920x1080 and scaled to the TV's screen. Glass surfaces use
+   pre-blurred wallpaper images (same idea as the design's frost layer) instead of live
+   backdrop blur, so they stay smooth on TV hardware. */
+
+@font-face { font-family: Manrope; font-weight: 400; src: url(fonts/manrope-400.woff2) format("woff2"); }
+@font-face { font-family: Manrope; font-weight: 500; src: url(fonts/manrope-500.woff2) format("woff2"); }
+@font-face { font-family: Manrope; font-weight: 600; src: url(fonts/manrope-600.woff2) format("woff2"); }
+@font-face { font-family: Manrope; font-weight: 700; src: url(fonts/manrope-700.woff2) format("woff2"); }
+@font-face { font-family: Nunito; font-weight: 800; src: url(fonts/nunito-800.woff2) format("woff2"); }
+
+html, body { margin: 0; width: 100%; height: 100%; overflow: hidden; background: #000; }
+body { cursor: default; -webkit-user-select: none; user-select: none; -webkit-tap-highlight-color: transparent; }
+button { font-family: inherit; }
+button:focus { outline: none; }
+
+#stage {
+  position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; overflow: hidden;
+  transform-origin: 0 0;
+  background: #1d2a30; color: #f4f4f1;
+  font-family: Manrope, Arial, sans-serif; -webkit-font-smoothing: antialiased;
+}
+
+/* ------------------------------------------------------------------ Home */
+
+#home { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; overflow: hidden; z-index: 0; }
+#screens { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; z-index: 5; pointer-events: none; }
+#screens .sc { pointer-events: auto; }
+
+.photo {
+  position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; max-width: none;
+  object-fit: cover; opacity: 0; transition: opacity 700ms cubic-bezier(.22,.61,.24,1);
+}
+.photo.cur { opacity: 1; }
+
+.shade-top {
+  position: absolute; left: 0; top: 0; width: 1920px; height: 300px;
+  background: linear-gradient(to bottom, rgba(4,10,12,.32), rgba(4,10,12,.14) 150px, rgba(4,10,12,0));
+}
+.shade-bot {
+  position: absolute; left: 0; top: 560px; width: 1920px; height: 520px;
+  background: linear-gradient(to bottom, rgba(4,10,12,0), rgba(4,10,12,.42) 70%, rgba(4,10,12,.52));
+}
+
+/* Full-screen frosted layer behind All apps (design: rgba(6,10,14,.46) + blur(26px)). */
+#veil {
+  position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; pointer-events: none;
+  background-size: 1920px 1080px; background-repeat: no-repeat;
+  opacity: 0; transition: opacity 620ms cubic-bezier(.22,.61,.24,1);
+}
+#home.apps #veil { opacity: 1; }
+
+/* Round utility buttons (Wi-Fi, Settings, chevrons) */
+.u {
+  width: 84px; height: 84px; border-radius: 42px; padding: 0;
+  display: flex; align-items: center; justify-content: center;
+  border: 0; background: none; color: #f6f1e7; opacity: .66; cursor: pointer;
+  outline: 3px solid rgba(255,255,255,0); outline-offset: 6px;
+  transition: opacity 220ms cubic-bezier(.22,.61,.24,1), transform 260ms cubic-bezier(.34,1.3,.5,1), outline-color 220ms cubic-bezier(.22,.61,.24,1);
+}
+.u:hover, .u.on, .u.open { opacity: 1; }
+.u.on { outline-color: #fff; }
+.u:active { transform: scale(.92); }
+.u svg { width: 50px; height: 50px; filter: drop-shadow(0 1px 2px rgba(14,10,6,.4)); }
+
+#topbar { position: absolute; right: 122px; top: 72px; display: flex; align-items: center; z-index: 3; }
+#topbar .u + .u { margin-left: 8px; }
+
+/* Clock: big and centred on Home, a small glass pill on All apps */
+#clock {
+  position: absolute; left: 960px; top: 280px; transform: translateX(-50%);
+  padding: 0; border-radius: 0; background: rgba(8,14,18,0);
+  box-shadow: inset 0 0 0 0 rgba(255,255,255,0);
+  z-index: 3; pointer-events: none; will-change: transform;
+  transition: left 620ms cubic-bezier(.22,.61,.24,1), top 620ms cubic-bezier(.22,.61,.24,1),
+    transform 620ms cubic-bezier(.22,.61,.24,1), padding 620ms cubic-bezier(.22,.61,.24,1),
+    border-radius 620ms cubic-bezier(.22,.61,.24,1), background 620ms cubic-bezier(.22,.61,.24,1),
+    box-shadow 620ms cubic-bezier(.22,.61,.24,1);
+}
+#clockText {
+  display: block; font-family: Nunito, Manrope, Arial, sans-serif;
+  font-size: 250px; line-height: 1; font-weight: 800; letter-spacing: -6px;
+  font-variant-numeric: tabular-nums; white-space: nowrap;
+  -webkit-background-clip: text; background-clip: text; color: transparent; -webkit-text-fill-color: transparent;
+  filter: drop-shadow(0 14px 28px rgba(0,0,0,.26));
+  transition: font-size 620ms cubic-bezier(.22,.61,.24,1), letter-spacing 620ms cubic-bezier(.22,.61,.24,1);
+}
+#home.apps #clock {
+  left: 65px; top: 72px; transform: translateX(0%);
+  padding: 12px 30px; border-radius: 36px; background: rgba(8,14,18,.34);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.3);
+}
+#home.apps #clockText {
+  font-size: 48px; letter-spacing: -1px;
+  background-image: linear-gradient(180deg, rgba(255,255,255,.98), rgba(255,255,255,.86)) !important;
+  filter: drop-shadow(0 2px 28px rgba(0,0,0,.26));
+}
+
+/* Wi-Fi popover */
+@keyframes popIn { 0% { opacity: 0; transform: scale(.88) translateY(-12px); } 58% { opacity: 1; transform: scale(1.015) translateY(1px); } 100% { opacity: 1; transform: scale(1) translateY(0); } }
+@keyframes popOut { 0% { opacity: 1; transform: scale(1); } 100% { opacity: 0; transform: scale(.9) translateY(-10px); } }
+#wifiPop {
+  position: absolute; right: 122px; top: 176px; width: 540px; padding: 20px; box-sizing: border-box;
+  border-radius: 44px; z-index: 4; transform-origin: 100% 0; visibility: hidden;
+  background-repeat: no-repeat; background-size: 1920px 1080px;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.24), 0 30px 70px rgba(0,0,0,.4);
+}
+#wifiPop.open { visibility: visible; animation: popIn 440ms cubic-bezier(.34,1.3,.5,1) forwards; }
+#wifiPop.closing { visibility: visible; animation: popOut 200ms cubic-bezier(.4,0,1,1) forwards; }
+.wifi-head { display: flex; align-items: center; justify-content: space-between; padding: 6px 16px 14px; font-size: 30px; font-weight: 600; }
+.wifi-head span { font-size: 24px; font-weight: 500; color: rgba(255,255,255,.8); }
+.net {
+  width: 100%; height: 72px; display: flex; align-items: center; padding: 0 16px; box-sizing: border-box;
+  border: 0; border-radius: 24px; background: transparent; color: #f4f4f1;
+  font-size: 30px; font-weight: 500; letter-spacing: -0.4px; text-align: left; cursor: pointer;
+  transition: background 220ms cubic-bezier(.22,.61,.24,1), box-shadow 220ms cubic-bezier(.22,.61,.24,1);
+}
+.net.cur { background: rgba(255,255,255,.14); }
+.net:hover, .net.on { background: rgba(255,255,255,.2); }
+.net.on { box-shadow: inset 0 0 0 3px rgba(255,255,255,.9); }
+.net svg { flex: none; }
+.net .nm { flex: 1; margin-left: 16px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.net .lock, .net .tick { margin-left: 16px; }
+
+/* Everything that slides up for All apps */
+#slide {
+  position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; will-change: transform;
+  transform: translateY(0); transition: transform 620ms cubic-bezier(.22,.61,.24,1);
+}
+#home.apps #slide { transform: translateY(-700px); }
+
+/* Dock: one pad value drives it, tile radius 26 + pad 30 = dock radius 56 */
+#dock {
+  position: absolute; left: 65px; top: 711px; width: 1790px; height: 232px;
+  opacity: 1; transform: translateY(0);
+  transition: opacity 380ms cubic-bezier(.22,.61,.24,1), transform 620ms cubic-bezier(.22,.61,.24,1);
+}
+#home.apps #dock { opacity: 0; transform: translateY(-40px); pointer-events: none; }
+#dockGlass {
+  position: absolute; left: 0; top: 0; right: 0; bottom: 0; border-radius: 56px;
+  background-repeat: no-repeat; background-size: 1920px 1080px;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.24);
+}
+#shelf {
+  position: absolute; left: -30px; top: -60px; width: 1850px; height: 352px;
+  -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat;
+  -webkit-mask-size: 100% 1000%; mask-size: 100% 1000%;
+  -webkit-mask-position: left center; mask-position: left center;
+}
+#track {
+  position: absolute; left: 60px; top: 0; height: 352px; will-change: transform;
+  transition: transform 420ms cubic-bezier(.22,.61,.24,1);
+}
+
+#cueDown { position: absolute; left: 918px; top: 972px; transition: opacity 300ms cubic-bezier(.22,.61,.24,1); }
+#home.apps #cueDown { opacity: 0; pointer-events: none; }
+#cueUp { position: absolute; left: 918px; top: 72px; z-index: 3; opacity: 0; pointer-events: none; transition: opacity 300ms cubic-bezier(.22,.61,.24,1); }
+#home.apps #cueUp { opacity: .66; pointer-events: auto; }
+
+#allLabel {
+  position: absolute; left: 95px; top: 984px; font-size: 30px; line-height: 40px; font-weight: 600;
+  letter-spacing: -0.4px; color: rgba(255,255,255,.88); text-shadow: 0 1px 3px rgba(0,0,0,.3);
+}
+#gridWrap {
+  position: absolute; left: 59px; top: 1028px; width: 1802px; height: 712px; padding: 36px; box-sizing: border-box;
+  overflow-y: auto; overflow-x: hidden; scrollbar-width: none;
+  -webkit-mask-image: linear-gradient(to bottom, rgba(0,0,0,0) 0px, #000 36px, #000 calc(100% - 96px), rgba(0,0,0,.12));
+  mask-image: linear-gradient(to bottom, rgba(0,0,0,0) 0px, #000 36px, #000 calc(100% - 96px), rgba(0,0,0,.12));
+}
+#gridWrap::-webkit-scrollbar { display: none; }
+#grid { display: grid; grid-template-columns: repeat(5, 322px); grid-gap: 30px; gap: 30px; padding-bottom: 120px; }
+
+/* App tiles: rectangular, brand mark or the app's own TV banner, no names */
+.tile {
+  position: absolute; width: 322px; height: 172px; padding: 0; border: 0; border-radius: 26px;
+  display: flex; align-items: center; justify-content: center; overflow: hidden; cursor: pointer;
+  will-change: transform; transform: scale(1) translateY(0); z-index: 1;
+  box-shadow: 0 6px 16px rgba(0,0,0,.26);
+  outline: 5px solid rgba(255,255,255,0); outline-offset: -5px;
+  transition: transform 280ms cubic-bezier(.34,1.3,.5,1), box-shadow 240ms cubic-bezier(.22,.61,.24,1), outline-color 240ms cubic-bezier(.22,.61,.24,1);
+}
+.tile::after {
+  content: ""; position: absolute; left: 0; top: 0; right: 0; bottom: 0; border-radius: inherit; pointer-events: none;
+  background: linear-gradient(170deg, rgba(255,255,255,.18), rgba(255,255,255,0) 46%);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.22);
+}
+.tile.on {
+  transform: scale(1.08) translateY(-5px); box-shadow: 0 12px 26px rgba(0,0,0,.38);
+  outline-color: rgba(255,255,255,.96); z-index: 2;
+}
+#dock .tile { top: 90px; }
+#grid .tile { position: relative; }
+.tile .banner { position: absolute; left: 0; top: 0; width: 100%; height: 100%; object-fit: cover; }
+.tile .icon { width: 112px; height: 112px; object-fit: contain; }
+.tile.iconic { flex-direction: column; }
+.tile.iconic .icon { width: 92px; height: 92px; }
+.tile .nmc {
+  margin-top: 12px; max-width: 280px; font-size: 24px; line-height: 30px; font-weight: 600; letter-spacing: -0.2px;
+  color: rgba(255,255,255,.9); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.tile .nmonly {
+  max-width: 270px; text-align: center; font-size: 34px; line-height: 40px; font-weight: 700; letter-spacing: -0.8px;
+  color: #f4f4f1; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+}
+.thumb .nmonly { font-size: 13px; line-height: 16px; max-width: 100px; letter-spacing: 0; }
+.tile .txt { font-size: 58px; font-weight: 700; letter-spacing: -2px; white-space: nowrap; }
+.tile .txt.sm { font-size: 44px; letter-spacing: -1.4px; }
+.tile .sub {
+  position: absolute; left: 0; right: 0; bottom: 18px; text-align: center;
+  font-size: 22px; font-weight: 600; letter-spacing: .4px; color: rgba(255,255,255,.6); text-transform: uppercase;
+}
+
+/* --------------------------------------------------- Settings screens */
+
+@keyframes scFade { from { opacity: 0; } to { opacity: 1; } }
+@keyframes scDrop { from { opacity: 0; transform: translateY(-14px); } to { opacity: 1; transform: none; } }
+@keyframes scRise { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: none; } }
+@keyframes scSlide { from { opacity: 0; transform: translateX(-30px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { * { animation-duration: .01ms !important; transition-duration: .01ms !important; } }
+
+.sc { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; overflow: hidden; background: #1d2a30; }
+.sc-bg {
+  position: absolute; left: -40px; top: -40px; width: 2000px; height: 1160px;
+  background-size: cover; background-position: center; transition: background-image .6s ease;
+}
+.sc-dim { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; background: rgba(8,12,16,.52); animation: scFade 420ms cubic-bezier(.22,.61,.24,1) both; }
+.sc-back {
+  position: absolute; left: 140px; top: 72px; height: 64px; display: flex; align-items: center;
+  color: #f4f4f1; font-size: 30px; font-weight: 500; letter-spacing: -0.3px; cursor: pointer;
+  border-radius: 32px; padding: 0 20px 0 8px; margin-left: -8px;
+  animation: scDrop 440ms cubic-bezier(.22,.61,.24,1) 70ms both;
+}
+.sc-back svg { margin-right: 12px; }
+.sc-title { position: absolute; left: 140px; margin: 0; font-size: 72px; line-height: 88px; font-weight: 600; letter-spacing: -1.6px; animation: scRise 500ms cubic-bezier(.22,.61,.24,1) 120ms both; }
+
+.srow {
+  height: 88px; padding: 0 32px; border-radius: 30px; display: flex; align-items: center;
+  color: #f4f4f1; cursor: pointer; background: transparent;
+  transition: background 220ms cubic-bezier(.22,.61,.24,1);
+}
+.srow + .srow { margin-top: 12px; }
+.srow .nm { flex: 1; margin-left: 24px; font-size: 38px; font-weight: 500; letter-spacing: -0.7px; }
+.srow.on, .wrow.on {
+  background: linear-gradient(170deg, rgba(255,255,255,.30), rgba(255,255,255,.16) 58%, rgba(255,255,255,.22));
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.34);
+}
+.sc-desc { position: absolute; left: 1160px; top: 296px; width: 620px; animation: scRise 540ms cubic-bezier(.22,.61,.24,1) 300ms both; }
+.sc-desc .dt { font-size: 56px; line-height: 64px; font-weight: 600; letter-spacing: -1.2px; }
+.sc-desc .dd { margin-top: 16px; font-size: 32px; line-height: 44px; font-weight: 500; color: rgba(255,255,255,.84); }
+
+.wrow {
+  height: 112px; padding: 0 40px; border: 0; border-radius: 32px; display: flex; align-items: center; justify-content: space-between;
+  color: #f4f4f1; font-size: 40px; font-weight: 500; letter-spacing: -0.8px; cursor: pointer; background: transparent;
+  transition: background 220ms cubic-bezier(.22,.61,.24,1);
+}
+.wrow + .wrow { margin-top: 12px; }
+
+.wprev { position: relative; width: 760px; height: 428px; border-radius: 28px; overflow: hidden; box-shadow: 0 30px 80px rgba(0,0,0,.4), inset 0 0 0 1px rgba(255,255,255,.14); }
+.wprev img { position: absolute; left: 0; top: 0; width: 760px; height: 428px; max-width: none; object-fit: cover; opacity: 0; transition: opacity .4s ease; }
+.wprev img.cur { opacity: 1; }
+
+/* Apps on Home */
+.arow {
+  height: 80px; border-radius: 28px; display: flex; align-items: center; padding: 0 12px; flex: none;
+  transition: background 180ms cubic-bezier(.2,.7,.2,1);
+}
+.arow + .arow { margin-top: 10px; }
+.arow.on, .arow:hover { background: linear-gradient(170deg, rgba(255,255,255,.22), rgba(255,255,255,.1) 58%, rgba(255,255,255,.14)); }
+.thumb { width: 112px; height: 70px; border-radius: 14px; flex: none; display: flex; align-items: center; justify-content: center; overflow: hidden; position: relative; }
+.thumb .banner { position: absolute; left: 0; top: 0; width: 100%; height: 100%; object-fit: cover; }
+.thumb .icon { width: 48px; height: 48px; object-fit: contain; }
+.thumb .txt { font-size: 26px; font-weight: 700; letter-spacing: -0.8px; white-space: nowrap; }
+.thumb .txt.sm { font-size: 20px; letter-spacing: -0.4px; }
+.arow .nm { flex: 1; margin-left: 20px; font-size: 34px; font-weight: 500; letter-spacing: -0.6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pill, .sq {
+  height: 56px; border: 0; border-radius: 28px; background: rgba(255,255,255,.16); color: #f4f4f1; cursor: pointer;
+  outline: 3px solid rgba(255,255,255,0); outline-offset: 4px; margin-left: 20px; flex: none;
+  transition: background 160ms linear, outline-color 160ms linear;
+}
+.pill { padding: 0 26px; font: 600 26px/1 Manrope, Arial, sans-serif; }
+.sq { width: 56px; padding: 0; display: flex; align-items: center; justify-content: center; }
+.pill:hover, .sq:hover, .pill.on, .sq.on { background: rgba(255,255,255,.28); }
+.pill.on, .sq.on { outline-color: #fff; }
+.pill.dim, .sq.dim { opacity: .3; }
+.alist { overflow-y: auto; scrollbar-width: none; }
+.alist::-webkit-scrollbar { display: none; }
+.colhead { font-size: 28px; font-weight: 600; color: rgba(255,255,255,.74); padding: 0 0 16px 24px; }
