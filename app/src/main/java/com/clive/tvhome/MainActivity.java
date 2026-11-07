@@ -25,6 +25,8 @@ import android.webkit.WebViewClient;
  */
 public class MainActivity extends Activity {
 
+    static final int REQ_HOME_ROLE = 42;
+
     private WebView web;
     private Bridge bridge;
     private boolean pageReady;
@@ -117,8 +119,21 @@ public class MainActivity extends Activity {
     }
 
     @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == REQ_HOME_ROLE) {
+            // TV declined or has no chooser: use the Home-button switch instead.
+            if (!bridge.isDefaultHome()) bridge.openHomeSwitch();
+            js("window.TV && TV.netChanged()");
+        }
+    }
+
+    @Override
     protected void onResume() {
         super.onResume();
+        // Back in TV Home: the stock launcher no longer gets a pass.
+        getSharedPreferences(HomeButtonService.PREFS, MODE_PRIVATE).edit()
+                .remove(HomeButtonService.ALLOW_STOCK_UNTIL).apply();
         hideSystemUi();
         web.onResume();
         if (pageReady) js("window.TV && TV.resumed()");

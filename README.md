@@ -38,11 +38,11 @@ You need the TV's Google Play Store and either Wi-Fi or a USB stick.
 
 ## Make it the Home button
 
-Android TV usually keeps its own launcher on the Home button. Try in this order:
-1. Press Home after installing. Some TVs then ask which launcher to use. Pick **TV Home → Always**.
-2. If no prompt appears, install **Button Mapper** from Google Play. Map the remote's **Home** button to open **TV Home**.
+The first time TV Home opens, it goes to **Settings → Home button**. Press OK there:
+1. On Android 10 and later, the TV is asked to make TV Home the Home app. Confirm on screen.
+2. If the TV has no such choice, TV Home opens the TV's Accessibility settings instead. Turn on **TV Home: Home button**. From then on, whenever the TV's built-in home screen appears (Home button, Back out of an app, power-on), TV Home opens in its place. The switch only checks which app is in front. It doesn't read the screen or your keys.
 
-Until then, TV Home opens like any other app from the TV's app list.
+To use the TV's own launcher on purpose, open it from All apps: TV Home stays out of the way for 10 minutes or until you return to TV Home. The Home button row shows whether it's on. Turn the switch off in Accessibility settings to stop it.
 
 ## Build
 

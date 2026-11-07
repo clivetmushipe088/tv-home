@@ -238,7 +238,7 @@ button:focus { outline: none; }
   color: #f4f4f1; cursor: pointer; background: transparent;
   transition: background 220ms cubic-bezier(.22,.61,.24,1);
 }
-.srow + .srow { margin-top: 12px; }
+.srow + .srow { margin-top: 6px; }
 .srow .nm { flex: 1; margin-left: 24px; font-size: 38px; font-weight: 500; letter-spacing: -0.7px; }
 .srow.on, .wrow.on {
   background: linear-gradient(170deg, rgba(255,255,255,.30), rgba(255,255,255,.16) 58%, rgba(255,255,255,.22));

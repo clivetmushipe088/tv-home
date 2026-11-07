@@ -343,6 +343,7 @@
     { id: 'network', n: 'Network', d: ICON.wifi },
     { id: 'wallpaper', n: 'Wallpaper', d: 'M3 5h18v14H3z M3 16l5-5 4 4 3-3 6 6 M8.5 9.5h.01', screen: 'wallpaper' },
     { id: 'apps', n: 'Apps on Home', d: 'M4 4h6v6H4z M14 4h6v6h-6z M4 14h6v6H4z M14 14h6v6h-6z', screen: 'apps' },
+    { id: 'homekey', n: 'Home button', d: 'M3 11l9-7 9 7 M5 10v10h14V10 M10 20v-6h4v6', home: true },
     { id: 'display', n: 'Display', d: 'M3 4h18v12H3z M8 20h8 M12 16v4', sys: 'display' },
     { id: 'sound', n: 'Sound', d: 'M11 5L6 9H3v6h3l5 4z M15.5 8.5a5 5 0 010 7 M18.5 5.5a9 9 0 010 13', sys: 'sound' },
     { id: 'accessibility', n: 'Accessibility', d: 'M12 4a1.5 1.5 0 100 3 1.5 1.5 0 000-3z M5 9h14 M12 9v5 M9 20l3-6 3 6', sys: 'accessibility' },
@@ -358,6 +359,11 @@
           (net.ip ? ' This TV is at ' + net.ip + '.' : '');
       case 'wallpaper': return 'Choose the photo behind Home.';
       case 'apps': return 'Pick the main apps that sit in the Home bar.';
+      case 'homekey':
+        var hs = J(N.homeStatus ? N.homeStatus() : '{}', {});
+        if (hs['default']) return 'TV Home is your home screen. The Home button opens it.';
+        if (hs.service) return 'On. The Home button and power-on go to TV Home.';
+        return 'Make the Home button open TV Home. Press OK, then confirm on the TV.';
       case 'display':
         var ins = S.items.filter(function (it) { return it.kind === 'input'; }).map(function (it) { return it.n; });
         return 'Picture, brightness and HDMI sources.' + (ins.length ? ' This TV has ' + ins.join(', ') + '.' : '');
@@ -400,7 +406,7 @@
     if (sc.name === 'settings') {
       h = '<section class="sc">' + bgHTML() + backHTML('Home') +
         '<h1 class="sc-title" style="top:160px">Settings</h1>' +
-        '<div style="position:absolute;left:140px;top:280px;width:900px">' +
+        '<div class="slist" style="position:absolute;left:140px;top:268px;width:900px">' +
         SROWS.map(function (r, i) {
           return '<div class="srow" data-k="s:' + i + '" style="animation:scSlide 460ms ' + EASE + ' ' + (160 + i * 45) + 'ms both">' +
             svg(r.d, 40, 1.6, ' style="flex:none"') + '<span class="nm">' + esc(r.n) + '</span>' +
@@ -519,6 +525,7 @@
       else if (k === 'ok') {
         var r = SROWS[sc.f];
         if (r.screen) return openScreen(r.screen);
+        if (r.home) { if (N.makeDefaultHome) N.makeDefaultHome(); return; }
         N.openSettings(r.sys || 'wifi');
         return;
       }
@@ -668,7 +675,7 @@
       S.zone = S.dock.length ? 'dock' : 'top';
       paint();
     },
-    resumed: function () { tick(); TV.netChanged(); },
+    resumed: function () { tick(); TV.netChanged(); maybeAskHome(); },
     appsChanged: function () {
       loadItems();
       loadHome();
@@ -681,6 +688,15 @@
       if (S.screen && S.screen.name === 'settings') paintScreen();
     }
   };
+
+  /* First run only: if TV Home isn't the Home button yet, open Settings on the Home button row. */
+  function maybeAskHome() {
+    if (!window.Native || !N.homeStatus || N.get('homeAsked')) return;
+    var hs = J(N.homeStatus(), {});
+    if (hs['default'] || hs.service) return;
+    N.set('homeAsked', '1');
+    for (var i = 0; i < SROWS.length; i++) if (SROWS[i].home) return openScreen('settings', i);
+  }
 
   // ------------------------------------------------------------------ fit
 
@@ -705,6 +721,7 @@
     loadHome();
     renderHome();
     setNetGlyph();
+    maybeAskHome();
 
     // Preview helpers: ?view=apps, ?screen=settings|wallpaper|apps, ?wifi=1
     var qs = location.search;
@@ -740,6 +757,8 @@
       hasLocation: function () { return true; },
       askLocation: function () {},
       device: function () { return JSON.stringify({ brand: 'Sharp', model: 'SWTV-20AE-PRO', release: '11', sdk: 30, w: 1920, h: 1080 }); },
+      homeStatus: function () { return JSON.stringify({ 'default': false, service: false }); },
+      makeDefaultHome: function () { console.log('make default home'); },
       get: function (k) { return store[k] || null; },
       set: function (k, v) { store[k] = v; }
     };
