@@ -171,6 +171,7 @@
     $('track').innerHTML = S.dock.map(function (it, i) { return tileHTML(it, 'dock:' + i, 'left:' + (i * PITCH) + 'px'); }).join('');
     $('track').style.width = Math.max(0, S.dock.length * PITCH - PAD) + 'px';
     $('grid').innerHTML = S.grid.map(function (it, i) { return tileHTML(it, 'grid:' + i); }).join('');
+    S.gridFirst = -1;
     S.dockIdx = Math.max(0, Math.min(S.dockIdx, S.dock.length - 1));
     S.gridIdx = Math.max(0, Math.min(S.gridIdx, S.grid.length - 1));
     if (!S.dock.length && S.zone === 'dock') S.zone = 'top';
@@ -227,15 +228,16 @@
     var n = S.dock.length, trackW = Math.max(0, n * PITCH - PAD), maxOff = Math.max(0, trackW - SHELF_W);
     var off = Math.min(maxOff, Math.max(0, S.dockIdx - 3) * PITCH);
     $('track').style.transform = 'translateX(' + (-off) + 'px)';
-    var L0 = 60, R0 = 60 + SHELF_W, W0 = 120 + SHELF_W;
-    var lStops = off > 0 ? 'rgba(0,0,0,0) ' + L0 + 'px,#000 ' + (L0 + FADE) + 'px' : '#000 0px';
-    var rStops = off < maxOff ? '#000 ' + (R0 - FADE) + 'px,rgba(0,0,0,0) ' + R0 + 'px' : '#000 ' + W0 + 'px';
-    var mask = 'linear-gradient(to right,' + lStops + ',' + rStops + ')';
-    $('shelf').style.webkitMaskImage = mask;
-    $('shelf').style.maskImage = mask;
 
     if (S.zone === 'grid' && S.view === 'apps') {
-      S.gridTop = Math.max(0, (Math.floor(S.gridIdx / COLS) - 1) * ROW_H);
+      // Keep one row above the focus in view; nudge 8px so the row scrolled past is fully hidden.
+      var first = Math.max(0, Math.floor(S.gridIdx / COLS) - 1);
+      S.gridTop = first ? first * ROW_H + 8 : 0;
+      if (S.gridFirst !== first) {
+        S.gridFirst = first;
+        var kids = $('grid').children;
+        for (var gi = 0; gi < kids.length; gi++) kids[gi].style.visibility = gi < first * COLS ? 'hidden' : '';
+      }
       $('grid').style.transform = 'translateY(' + (-S.gridTop) + 'px)';
     }
   }
