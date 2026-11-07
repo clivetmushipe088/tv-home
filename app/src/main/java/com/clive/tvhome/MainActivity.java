@@ -153,8 +153,10 @@ public class MainActivity extends Activity {
         ringSettings = ring();
         btnWifi = add(root, icon(R.drawable.ic_wifi), 1610, 60, 108, 108);
         btnWifi.setBackground(new InsetDrawable(ringWifi, Math.round(6 * s)));
+        iconPadding(btnWifi);   // setBackground resets padding to the ring's inset
         btnSettings = add(root, icon(R.drawable.ic_settings), 1702, 60, 108, 108);
         btnSettings.setBackground(new InsetDrawable(ringSettings, Math.round(6 * s)));
+        iconPadding(btnSettings);
         cueUp = add(root, icon(R.drawable.ic_chev_up), 906, 60, 108, 108);
         cueUp.setAlpha(0f);
 
@@ -215,6 +217,12 @@ public class MainActivity extends Activity {
         v.setScaleType(ImageView.ScaleType.FIT_CENTER);
         v.setImageAlpha(168);           // design opacity .66
         return v;
+    }
+
+    /** 108 px box, 50 px glyph (design size). */
+    private void iconPadding(ImageView v) {
+        int pad = Math.round(29 * s);
+        v.setPadding(pad, pad, pad, pad);
     }
 
     private GradientDrawable ring() {
