@@ -97,8 +97,9 @@
 
   // ----------------------------------------------------------------- data
 
-  function loadItems() {
-    var apps = J(N.apps(), []), ins = J(N.inputs(), []), items = [];
+  function loadItems(inputsOnly) {
+    var apps = inputsOnly ? [] : J(N.apps(), []), ins = J(N.inputs(), []), items = [];
+    S.full = !inputsOnly;
     apps.forEach(function (a) {
       if (!a || !a.pkg) return;
       items.push({ id: a.pkg, kind: 'app', pkg: a.pkg, cls: a.cls || '', n: a.n || a.pkg, tv: !!a.tv,
@@ -398,6 +399,7 @@
 
   function openScreen(name, f) {
     if (S.wifi) closeWifi();
+    if (name === 'apps' && !S.full) { loadItems(); loadHome(); }   // the app list is only read when needed
     S.screen = { name: name, f: f || 0, col: 'L', r: 0, b: 1, anim: true };
     if (name === 'wallpaper') S.screen.f = wallIndex(S.wall);
     paint();
@@ -579,7 +581,7 @@
       }
       if (changed) {
         saveHome();
-        renderHome();
+        if (!EMBED) renderHome();
         var keepScroll = $('aList') ? $('aList').scrollTop : 0;
         renderScreen();
         if ($('aList')) $('aList').scrollTop = keepScroll;
@@ -688,9 +690,9 @@
     },
     resumed: function () { tick(); TV.netChanged(); maybeAskHome(); },
     appsChanged: function () {
-      loadItems();
+      loadItems(EMBED && !S.full);
       loadHome();
-      renderHome();
+      if (!EMBED) renderHome();
       if (S.screen && S.screen.name === 'apps') renderScreen();
     },
     netChanged: function () {
@@ -725,6 +727,18 @@
     fit();
     S.dev = J(N.device(), {});
     S.wall = wallById(N.get('wallpaper') || 'misty').id;
+    if (EMBED) {
+      // Overlay over the native Home: only what this screen needs, nothing for Home itself.
+      document.documentElement.classList.add('embed');
+      applyWall();
+      tick();
+      loadItems(true);
+      S.net = J(N.network(), {});
+      if (MODE === 'wifi') openWifi();
+      else if (HASH.screen === 'wallpaper' || HASH.screen === 'apps') openScreen(HASH.screen);
+      else openScreen('settings', Math.max(0, Math.min(SROWS.length - 1, Number(HASH.f) || 0)));
+      return;
+    }
     buildWallpapers();
     applyWall();
     tick();
@@ -732,13 +746,6 @@
     loadHome();
     renderHome();
     setNetGlyph();
-    if (EMBED) {
-      document.documentElement.classList.add('embed');
-      if (MODE === 'wifi') openWifi();
-      else if (HASH.screen === 'wallpaper' || HASH.screen === 'apps') openScreen(HASH.screen);
-      else openScreen('settings', Math.max(0, Math.min(SROWS.length - 1, Number(HASH.f) || 0)));
-      return;
-    }
     maybeAskHome();
 
     // Preview helpers: ?view=apps, ?screen=settings|wallpaper|apps, ?wifi=1

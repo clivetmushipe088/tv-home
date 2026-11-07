@@ -81,11 +81,31 @@ public class SettingsActivity extends Activity {
 
         bridge = new Bridge(this, web);
         web.addJavascriptInterface(bridge, "Native");
-        setContentView(web);
-        web.requestFocus();
 
         Intent in = getIntent();
         String mode = "wifi".equals(in.getStringExtra("mode")) ? "wifi" : "settings";
+
+        // The page's own background (blurred wallpaper + dim) appears instantly, natively,
+        // so the screen responds at once while the web page loads on top.
+        android.widget.FrameLayout root = new android.widget.FrameLayout(this);
+        if (!"wifi".equals(mode)) {
+            android.widget.ImageView bg = new android.widget.ImageView(this);
+            bg.setScaleType(android.widget.ImageView.ScaleType.CENTER_CROP);
+            bg.setScaleX(2000f / 1920f);
+            bg.setScaleY(1160f / 1080f);
+            String wall = getSharedPreferences(Catalog.PREFS, MODE_PRIVATE).getString("wallpaper", "misty");
+            try (java.io.InputStream is = getAssets().open("wallpapers/" + wall + "-glass.jpg")) {
+                android.graphics.BitmapFactory.Options o = new android.graphics.BitmapFactory.Options();
+                o.inPreferredConfig = android.graphics.Bitmap.Config.RGB_565;
+                bg.setImageBitmap(android.graphics.BitmapFactory.decodeStream(is, null, o));
+            } catch (Exception ignored) {
+            }
+            bg.setColorFilter(new android.graphics.PorterDuffColorFilter(0x85080C10, android.graphics.PorterDuff.Mode.SRC_ATOP));
+            root.addView(bg, new android.widget.FrameLayout.LayoutParams(-1, -1));
+        }
+        root.addView(web, new android.widget.FrameLayout.LayoutParams(-1, -1));
+        setContentView(root);
+        web.requestFocus();
         StringBuilder hash = new StringBuilder("mode=").append(mode);
         if (in.getStringExtra("screen") != null) hash.append("&screen=").append(in.getStringExtra("screen"));
         hash.append("&f=").append(in.getIntExtra("f", 0));

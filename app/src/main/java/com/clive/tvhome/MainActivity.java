@@ -53,7 +53,7 @@ public class MainActivity extends Activity {
     private static final float[] WALL_VEIL = {.2f, .12f, .12f, .12f};
 
     private float s;
-    private Typeface manropeSemi, manropeBold, nunito;
+    private Typeface manropeSemi, manropeBold, manropeMedium, nunito;
     private SharedPreferences prefs;
     private final Handler ui = new Handler(Looper.getMainLooper());
 
@@ -63,6 +63,7 @@ public class MainActivity extends Activity {
     private FrameLayout slide, dockGroup, gridClip, grid;
     private GlassView dockGlass;
     private ClockView clock, pill;
+    private WifiPanel wifi;
     private ObjectAnimator clockFade, pillFade;
 
     private List<Catalog.Item> items = new ArrayList<>();
@@ -89,6 +90,7 @@ public class MainActivity extends Activity {
 
         manropeSemi = font("fonts/manrope_semibold.ttf", Typeface.DEFAULT);
         manropeBold = font("fonts/manrope_bold.ttf", Typeface.DEFAULT_BOLD);
+        manropeMedium = font("fonts/manrope_medium.ttf", Typeface.DEFAULT);
         nunito = font("fonts/nunito_extrabold.ttf", Typeface.DEFAULT_BOLD);
 
         FrameLayout root = new FrameLayout(this);
@@ -155,6 +157,8 @@ public class MainActivity extends Activity {
         btnSettings.setBackground(new InsetDrawable(ringSettings, Math.round(6 * s)));
         cueUp = add(root, icon(R.drawable.ic_chev_up), 906, 60, 108, 108);
         cueUp.setAlpha(0f);
+
+        wifi = add(root, new WifiPanel(this, s, manropeSemi, manropeMedium), 1258, 176, 540, 300);
 
         applyWallpaper(true);
         tick();
@@ -298,7 +302,9 @@ public class MainActivity extends Activity {
         photo.setImageBitmap(asset("wallpapers/" + id + "-photo.jpg", screenW));
         veil.setImageBitmap(asset("wallpapers/" + id + "-soft.jpg", 960));
         int tint = (Math.round(WALL_VEIL[idx] * 255) << 24) | 0x080E12;
-        dockGlass.set(asset("wallpapers/" + id + "-glass.jpg", 960), tint);
+        Bitmap glass = asset("wallpapers/" + id + "-glass.jpg", 960);
+        dockGlass.set(glass, tint);
+        if (wifi != null) wifi.setGlass(glass);
     }
 
     private void buildTiles() {
@@ -344,10 +350,11 @@ public class MainActivity extends Activity {
     private void paint(boolean animate) {
         for (int i = 0; i < dockTiles.size(); i++) dockTiles.get(i).setOn(zone == DOCK && i == dockIdx, animate);
         for (int i = 0; i < gridTiles.size(); i++) gridTiles.get(i).setOn(zone == GRID && i == gridIdx, animate);
-        boolean wifiOn = zone == TOP && topIdx == 0, setOn = zone == TOP && topIdx == 1;
+        boolean panel = wifi != null && wifi.isOpen();
+        boolean wifiOn = zone == TOP && topIdx == 0 && !panel, setOn = zone == TOP && topIdx == 1 && !panel;
         ringWifi.setAlpha(wifiOn ? 255 : 0);
         ringSettings.setAlpha(setOn ? 255 : 0);
-        btnWifi.setImageAlpha(wifiOn ? 255 : 168);
+        btnWifi.setImageAlpha(wifiOn || panel ? 255 : 168);
         btnSettings.setImageAlpha(setOn ? 255 : 168);
 
         if (zone == GRID && apps) {
@@ -477,6 +484,7 @@ public class MainActivity extends Activity {
         @Override
         public void onReceive(Context c, Intent i) {
             updateNetwork();
+            wifi.refresh();
         }
     };
 
@@ -516,6 +524,11 @@ public class MainActivity extends Activity {
     }
 
     private void onKey(String k) {
+        if (wifi.isOpen()) {
+            wifi.key(k);
+            paint(true);
+            return;
+        }
         if (k.equals("back")) {
             if (apps) goHome(false);
             return;
@@ -572,7 +585,20 @@ public class MainActivity extends Activity {
     }
 
     private void openWifi() {
-        startActivity(new Intent(this, SettingsActivity.class).putExtra("mode", "wifi"));
+        // Android only reveals Wi-Fi names to apps with location permission; ask once.
+        if (android.os.Build.VERSION.SDK_INT >= 23 && !wifi.hasLocation() && !prefs.getBoolean("askedLocation", false)) {
+            prefs.edit().putBoolean("askedLocation", true).apply();
+            requestPermissions(new String[]{android.Manifest.permission.ACCESS_FINE_LOCATION,
+                    android.Manifest.permission.ACCESS_COARSE_LOCATION}, 7);
+        }
+        wifi.open();
+        paint(true);
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        wifi.refresh();
     }
 
     private boolean isDefaultHome() {
@@ -608,11 +634,13 @@ public class MainActivity extends Activity {
     @Override
     protected void onNewIntent(Intent intent) {
         super.onNewIntent(intent);
+        wifi.close();
         goHome(true);
     }
 
     @Override
     public void onBackPressed() {
+        if (wifi.isOpen()) { wifi.close(); paint(true); return; }
         if (apps) goHome(false);
     }
 

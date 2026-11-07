@@ -109,16 +109,15 @@ public class Bridge {
                 o.put("cls", ai.name);
                 o.put("n", String.valueOf(ri.loadLabel(pm)).trim());
                 o.put("tv", tv);
-                Drawable banner = null;
-                if (Build.VERSION.SDK_INT >= 20) {
-                    banner = ai.loadBanner(pm);
-                    if (banner == null && ai.applicationInfo != null) banner = ai.applicationInfo.loadBanner(pm);
-                }
-                if (banner != null) {
-                    int w = Math.max(320, Math.min(640, banner.getIntrinsicWidth()));
-                    o.put("banner", toDataUri(banner, w, Math.round(w * 9f / 16f)));
-                } else {
-                    o.put("icon", toDataUri(ri.loadIcon(pm), 192, 192));
+                // Settings only shows small 112x70 thumbnails; brand apps use the design's marks.
+                if (Catalog.brandFor(ai.packageName) == null) {
+                    Drawable banner = null;
+                    if (Build.VERSION.SDK_INT >= 20) {
+                        banner = ai.loadBanner(pm);
+                        if (banner == null && ai.applicationInfo != null) banner = ai.applicationInfo.loadBanner(pm);
+                    }
+                    if (banner != null) o.put("banner", toDataUri(banner, 224, 126));
+                    else o.put("icon", toDataUri(ri.loadIcon(pm), 96, 96));
                 }
                 found.put(ai.packageName, o);
             } catch (Exception ignored) {
