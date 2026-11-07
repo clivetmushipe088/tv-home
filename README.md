@@ -52,8 +52,13 @@ Signing: the key is never committed. The workflow creates a key once and keeps i
 
 ## Layout
 
-- `app/src/main/assets/`: the interface. `index.html`, `app.css` and `app.js` are the port of the design, and `brands.js` holds the design's brand marks. Fonts are Manrope and Nunito. The wallpapers folder has the photo, frost, glass and soft versions of each wallpaper.
-- `app/src/main/java/com/clive/tvhome/MainActivity.java`: the full-screen host. It routes Home, Back and Menu keys to the page.
-- `app/src/main/java/com/clive/tvhome/Bridge.java`: reads apps, inputs, network and device details from the TV, and launches apps, inputs and system settings.
+Home and All apps are native Android views, so they stay smooth on TV hardware. The Settings screens and the Wi-Fi panel are a web page from the design. It opens over Home only when needed and closes when you leave.
 
-You can preview the interface by opening `app/src/main/assets/index.html` in Chrome with sample data. Add `?view=apps`, `?wifi=1`, `?screen=settings`, `?screen=wallpaper` or `?screen=apps` to the address to open a specific screen.
+- `java/.../MainActivity.java`: Home and All apps (dock, clock, glass, grid, remote navigation), laid out on the design's 1920×1080 grid and scaled to the screen.
+- `java/.../TileView.java`: one app tile. It shows the design's brand tile, the app's TV banner, its icon with its name, or an input name. Focus animates on the GPU only.
+- `ClockView.java`, `GlassView.java`: the gradient clock and the glass dock (a pre-blurred wallpaper crop, not a live blur).
+- `Catalog.java`: reads the installed apps, the TV's inputs and the saved dock order.
+- `SettingsActivity.java` + `Bridge.java`: host the Settings and Wi-Fi web screens (`assets/index.html#mode=settings` or `#mode=wifi`).
+- `assets/brands/`: the design's brand tiles, pre-rendered to images. `assets/fonts/`: Manrope and Nunito.
+
+Open `app/src/main/assets/index.html` in Chrome to preview the design and the Settings screens.

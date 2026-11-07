@@ -56,6 +56,14 @@
 
   var N = window.Native || mockNative();
 
+  // On the TV, Home is native; this page only shows Settings or the Wi-Fi panel over it.
+  // URL hash: mode=settings|wifi, screen=wallpaper|apps, f=<row to focus>
+  var HASH = {};
+  location.hash.replace(/^#/, '').split('&').forEach(function (kv) { var p = kv.split('='); if (p[0]) HASH[p[0]] = decodeURIComponent(p[1] || ''); });
+  var MODE = HASH.mode || 'home';
+  var EMBED = MODE !== 'home';
+  function closeOverlay() { if (N.close) N.close(); }
+
   // ------------------------------------------------------------- helpers
 
   function $(id) { return document.getElementById(id); }
@@ -322,7 +330,7 @@
     var pop = $('wifiPop');
     pop.classList.remove('open');
     pop.classList.add('closing');
-    setTimeout(function () { pop.classList.remove('closing'); }, 220);
+    setTimeout(function () { pop.classList.remove('closing'); if (EMBED) closeOverlay(); }, 220);
     paint();
   }
 
@@ -397,6 +405,7 @@
   }
 
   function closeScreens() {
+    if (EMBED) return closeOverlay();
     S.screen = null;
     $('screens').innerHTML = '';
     paint();
@@ -585,6 +594,7 @@
   function onKey(k) {
     if (S.screen) return screenKey(k);
     if (S.wifi) return wifiKey(k);
+    if (EMBED) return closeOverlay();
     if (k === 'back') { if (S.view === 'apps') goHome(); return; }
     if (k === 'menu') return openScreen('apps');
 
@@ -722,6 +732,13 @@
     loadHome();
     renderHome();
     setNetGlyph();
+    if (EMBED) {
+      document.documentElement.classList.add('embed');
+      if (MODE === 'wifi') openWifi();
+      else if (HASH.screen === 'wallpaper' || HASH.screen === 'apps') openScreen(HASH.screen);
+      else openScreen('settings', Math.max(0, Math.min(SROWS.length - 1, Number(HASH.f) || 0)));
+      return;
+    }
     maybeAskHome();
 
     // Preview helpers: ?view=apps, ?screen=settings|wallpaper|apps, ?wifi=1
@@ -760,6 +777,7 @@
       device: function () { return JSON.stringify({ brand: 'Sharp', model: 'SWTV-20AE-PRO', release: '11', sdk: 30, w: 1920, h: 1080 }); },
       homeStatus: function () { return JSON.stringify({ 'default': false, service: false }); },
       makeDefaultHome: function () { console.log('make default home'); },
+      close: function () { console.log('close overlay'); document.title = 'closed'; },
       get: function (k) { return store[k] || null; },
       set: function (k, v) { store[k] = v; }
     };

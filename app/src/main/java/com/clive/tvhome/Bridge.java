@@ -52,13 +52,13 @@ public class Bridge {
 
     private static final String LEANBACK = "android.intent.category.LEANBACK_LAUNCHER";
 
-    private final MainActivity act;
+    private final Activity act;
     private final WebView web;
     private final PackageManager pm;
     private final SharedPreferences prefs;
     private String appsCache;
 
-    Bridge(MainActivity act, WebView web) {
+    Bridge(Activity act, WebView web) {
         this.act = act;
         this.web = web;
         this.pm = act.getPackageManager();
@@ -423,7 +423,7 @@ public class Bridge {
                         android.app.role.RoleManager rm = act.getSystemService(android.app.role.RoleManager.class);
                         if (rm != null && rm.isRoleAvailable(android.app.role.RoleManager.ROLE_HOME)
                                 && !rm.isRoleHeld(android.app.role.RoleManager.ROLE_HOME)) {
-                            act.startActivityForResult(rm.createRequestRoleIntent(android.app.role.RoleManager.ROLE_HOME), MainActivity.REQ_HOME_ROLE);
+                            act.startActivityForResult(rm.createRequestRoleIntent(android.app.role.RoleManager.ROLE_HOME), SettingsActivity.REQ_HOME_ROLE);
                             return;
                         }
                     } catch (Exception ignored) {
@@ -441,6 +441,17 @@ public class Bridge {
         if (!start(new Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=flar2.homebutton")))) {
             start(new Intent(Intent.ACTION_VIEW, Uri.parse("https://play.google.com/store/apps/details?id=flar2.homebutton")));
         }
+    }
+
+    /** Close the Settings / Wi-Fi overlay and return to Home. */
+    @JavascriptInterface
+    public void close() {
+        act.runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                act.finish();
+            }
+        });
     }
 
     // --------------------------------------------------------------- prefs

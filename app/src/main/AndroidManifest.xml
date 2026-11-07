@@ -42,5 +42,14 @@
                 <category android:name="android.intent.category.LEANBACK_LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <!-- Settings screens and the Wi-Fi panel (web page from the design), opened over Home -->
+        <activity
+            android:name=".SettingsActivity"
+            android:theme="@style/Overlay"
+            android:excludeFromRecents="true"
+            android:noHistory="false"
+            android:screenOrientation="landscape"
+            android:configChanges="keyboard|keyboardHidden|navigation|orientation|screenLayout|screenSize|smallestScreenSize|uiMode|density|fontScale" />
     </application>
 </manifest>

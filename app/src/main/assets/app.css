@@ -290,3 +290,7 @@ button:focus { outline: none; }
 .alist { overflow-y: auto; scrollbar-width: none; }
 .alist::-webkit-scrollbar { display: none; }
 .colhead { font-size: 28px; font-weight: 600; color: rgba(255,255,255,.74); padding: 0 0 16px 24px; }
+
+/* Overlay mode (Android): Home is native underneath; show only Settings or the Wi-Fi panel. */
+.embed, .embed body, .embed #stage { background: transparent !important; }
+.embed #home > :not(#wifiPop) { display: none !important; }
