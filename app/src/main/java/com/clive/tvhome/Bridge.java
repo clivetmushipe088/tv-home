@@ -154,10 +154,6 @@ public class Bridge {
                     toast("Can't open this app");
                     return;
                 }
-                if (isHomeApp(pkg)) {
-                    // Opening the TV's own launcher on purpose: let it stay for a while.
-                    prefs.edit().putLong(HomeButtonService.ALLOW_STOCK_UNTIL, System.currentTimeMillis() + 10 * 60_000L).apply();
-                }
                 it.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED);
                 try {
                     act.startActivity(it);
@@ -399,41 +395,20 @@ public class Bridge {
         return ri != null && ri.activityInfo != null && act.getPackageName().equals(ri.activityInfo.packageName);
     }
 
-    private boolean isHomeApp(String pkg) {
-        Intent home = new Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_HOME).setPackage(pkg);
-        List<ResolveInfo> l = pm.queryIntentActivities(home, 0);
-        return l != null && !l.isEmpty();
-    }
-
-    boolean isHomeServiceOn() {
-        try {
-            String on = Settings.Secure.getString(act.getContentResolver(), Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES);
-            if (on == null) return false;
-            String me = new android.content.ComponentName(act, HomeButtonService.class).flattenToString();
-            String meShort = new android.content.ComponentName(act, HomeButtonService.class).flattenToShortString();
-            for (String s : on.split(":")) {
-                if (s.equalsIgnoreCase(me) || s.equalsIgnoreCase(meShort)) return true;
-            }
-        } catch (Exception ignored) {
-        }
-        return false;
-    }
-
     // ------------------------------------------------------- Home button
 
-    /** {"default": TV Home is the system Home app, "service": the Home-button switch is on} */
+    /** {"default": TV Home is the system Home app} */
     @JavascriptInterface
     public String homeStatus() {
         JSONObject o = new JSONObject();
         try {
             o.put("default", isDefaultHome());
-            o.put("service", isHomeServiceOn());
         } catch (Exception ignored) {
         }
         return o.toString();
     }
 
-    /** Ask Android to make TV Home the Home app; if the TV can't, open the Home-button switch. */
+    /** Ask Android to make TV Home the Home app; if the TV can't, offer Button Mapper from Google Play. */
     @JavascriptInterface
     public void makeDefaultHome() {
         act.runOnUiThread(new Runnable() {
@@ -452,22 +427,19 @@ public class Bridge {
                             return;
                         }
                     } catch (Exception ignored) {
-                        // fall through to the accessibility switch
+                        // fall through to Button Mapper
                     }
                 }
-                openHomeSwitch();
+                openButtonMapper();
             }
         });
     }
 
-    void openHomeSwitch() {
-        if (isHomeServiceOn()) {
-            toast("The Home button already opens TV Home");
-            return;
-        }
-        Toast.makeText(act, "Turn on \"TV Home: Home button\"", Toast.LENGTH_LONG).show();
-        if (!start(new Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS))) {
-            start(new Intent(Settings.ACTION_SETTINGS));
+    /** Button Mapper (Google Play) can send the remote's Home button to TV Home on TVs with no launcher choice. */
+    void openButtonMapper() {
+        Toast.makeText(act, "Install Button Mapper, then map Home to TV Home", Toast.LENGTH_LONG).show();
+        if (!start(new Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=flar2.homebutton")))) {
+            start(new Intent(Intent.ACTION_VIEW, Uri.parse("https://play.google.com/store/apps/details?id=flar2.homebutton")));
         }
     }
 

@@ -23,6 +23,15 @@ jobs:
         with:
           gradle-version: '8.7'
 
+      # The signing key lives in this repo's private Actions cache (never in git), so every
+      # build is signed with the same key and installs over the previous one.
+      # Repo secrets SIGNING_KEY_B64 + SIGNING_PASSWORD, if set, take priority.
+      - name: Restore signing key
+        uses: actions/cache@v4
+        with:
+          path: signing
+          key: tvhome-signing-v1
+
       - name: Signing key
         env:
           SIGNING_KEY_B64: ${{ secrets.SIGNING_KEY_B64 }}
@@ -31,16 +40,18 @@ jobs:
           mkdir -p signing
           if [ -n "$SIGNING_KEY_B64" ] && [ -n "$SIGNING_PASSWORD" ]; then
             echo "$SIGNING_KEY_B64" | base64 -d > signing/tvhome.jks
-          else
-            keytool -genkeypair -keystore signing/tvhome.jks -storepass android -keypass android \
+            printf '%s' "$SIGNING_PASSWORD" > signing/pass.txt
+          elif [ ! -f signing/tvhome.jks ] || [ ! -f signing/pass.txt ]; then
+            openssl rand -hex 24 > signing/pass.txt
+            P=$(cat signing/pass.txt)
+            keytool -genkeypair -keystore signing/tvhome.jks -storepass "$P" -keypass "$P" \
               -alias tvhome -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=TV Home"
-            echo "::warning::No SIGNING_KEY_B64 / SIGNING_PASSWORD secrets: built with a throwaway key, so the next build will need an uninstall before it can be installed."
+            echo "::notice::Created a new signing key; later builds reuse it from the cache."
           fi
+          echo "::add-mask::$(cat signing/pass.txt)"
 
       - name: Build release APK
-        env:
-          SIGNING_PASSWORD: ${{ secrets.SIGNING_PASSWORD }}
-        run: gradle :app:assembleRelease --no-daemon --stacktrace
+        run: SIGNING_PASSWORD="$(cat signing/pass.txt)" gradle :app:assembleRelease --no-daemon --stacktrace
 
       - name: Name the APK
         run: cp app/build/outputs/apk/release/app-release.apk tv-home.apk

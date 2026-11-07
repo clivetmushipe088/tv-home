@@ -40,16 +40,15 @@ You need the TV's Google Play Store and either Wi-Fi or a USB stick.
 
 The first time TV Home opens, it goes to **Settings → Home button**. Press OK there:
 1. On Android 10 and later, the TV is asked to make TV Home the Home app. Confirm on screen.
-2. If the TV has no such choice, TV Home opens the TV's Accessibility settings instead. Turn on **TV Home: Home button**. From then on, whenever the TV's built-in home screen appears (Home button, Back out of an app, power-on), TV Home opens in its place. The switch only checks which app is in front. It doesn't read the screen or your keys.
+2. If the TV has no such choice, TV Home opens **Button Mapper** in Google Play. Install it and map the remote's **Home** button to **TV Home**.
 
-To use the TV's own launcher on purpose, open it from All apps: TV Home stays out of the way for 10 minutes or until you return to TV Home. The Home button row shows whether it's on. Turn the switch off in Accessibility settings to stop it.
+TV Home doesn't include its own accessibility service: Google Play Protect blocks sideloaded apps that ask for one.
 
 ## Build
 
 The APK is built by GitHub Actions on every push to `main` (`.github/workflows/build.yml`) and published to the `latest` release. To build locally, open the folder in Android Studio and run *Build → Build APK*, or run `gradle :app:assembleRelease`.
 
-Signing: the key is never committed. Add two repository secrets (Settings → Secrets and variables → Actions):
-`SIGNING_KEY_B64` (the keystore, base64-encoded, alias `tvhome`) and `SIGNING_PASSWORD`. With them, every build updates the installed app in place. Without them, the workflow signs with a throwaway key, so the next build needs an uninstall first.
+Signing: the key is never committed. The workflow creates a key once and keeps it in the repo's private Actions cache, so each build installs over the last one. GitHub drops caches that go unused for 7 days. To pin the key permanently, add repository secrets `SIGNING_KEY_B64` (the keystore, base64-encoded, alias `tvhome`) and `SIGNING_PASSWORD`.
 
 ## Layout
 

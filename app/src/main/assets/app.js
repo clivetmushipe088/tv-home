@@ -205,7 +205,7 @@
 
   function tick() {
     var d = new Date(), h = d.getHours() % 12 || 12;
-    $('clockText').textContent = h + ':' + ('0' + d.getMinutes()).slice(-2);
+    $('clockText').textContent = $('clockSmall').textContent = h + ':' + ('0' + d.getMinutes()).slice(-2);
     clearTimeout(S.tt);
     S.tt = setTimeout(tick, 60000 - d.getSeconds() * 1000 - d.getMilliseconds() + 40);
   }
@@ -235,8 +235,8 @@
     $('shelf').style.maskImage = mask;
 
     if (S.zone === 'grid' && S.view === 'apps') {
-      var wrap = $('gridWrap'), top = Math.max(0, (Math.floor(S.gridIdx / COLS) - 1) * ROW_H);
-      if (wrap.scrollTo) wrap.scrollTo({ top: top, behavior: 'smooth' }); else wrap.scrollTop = top;
+      S.gridTop = Math.max(0, (Math.floor(S.gridIdx / COLS) - 1) * ROW_H);
+      $('grid').style.transform = 'translateY(' + (-S.gridTop) + 'px)';
     }
   }
 
@@ -362,8 +362,7 @@
       case 'homekey':
         var hs = J(N.homeStatus ? N.homeStatus() : '{}', {});
         if (hs['default']) return 'TV Home is your home screen. The Home button opens it.';
-        if (hs.service) return 'On. The Home button and power-on go to TV Home.';
-        return 'Make the Home button open TV Home. Press OK, then confirm on the TV.';
+        return 'Press OK to make TV Home your home screen. If the TV offers no choice, this opens Button Mapper in Google Play: install it and map Home to TV Home.';
       case 'display':
         var ins = S.items.filter(function (it) { return it.kind === 'input'; }).map(function (it) { return it.n; });
         return 'Picture, brightness and HDMI sources.' + (ins.length ? ' This TV has ' + ins.join(', ') + '.' : '');
@@ -660,7 +659,7 @@
   document.addEventListener('wheel', function (e) {
     if (S.screen || S.wifi) return;
     if (e.deltaY > 12 && S.view === 'home') goApps(0);
-    else if (e.deltaY < -12 && S.view === 'apps' && $('gridWrap').scrollTop <= 0) goHome();
+    else if (e.deltaY < -12 && S.view === 'apps' && !S.gridTop) goHome();
   }, { passive: true });
 
   // ----------------------------------------------------- native callbacks
@@ -693,7 +692,7 @@
   function maybeAskHome() {
     if (!window.Native || !N.homeStatus || N.get('homeAsked')) return;
     var hs = J(N.homeStatus(), {});
-    if (hs['default'] || hs.service) return;
+    if (hs['default']) return;
     N.set('homeAsked', '1');
     for (var i = 0; i < SROWS.length; i++) if (SROWS[i].home) return openScreen('settings', i);
   }

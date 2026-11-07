@@ -122,8 +122,8 @@ public class MainActivity extends Activity {
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
         if (requestCode == REQ_HOME_ROLE) {
-            // TV declined or has no chooser: use the Home-button switch instead.
-            if (!bridge.isDefaultHome()) bridge.openHomeSwitch();
+            // TV declined or has no chooser: offer Button Mapper instead.
+            if (!bridge.isDefaultHome()) bridge.openButtonMapper();
             js("window.TV && TV.netChanged()");
         }
     }
@@ -131,9 +131,6 @@ public class MainActivity extends Activity {
     @Override
     protected void onResume() {
         super.onResume();
-        // Back in TV Home: the stock launcher no longer gets a pass.
-        getSharedPreferences(HomeButtonService.PREFS, MODE_PRIVATE).edit()
-                .remove(HomeButtonService.ALLOW_STOCK_UNTIL).apply();
         hideSystemUi();
         web.onResume();
         if (pageReady) js("window.TV && TV.resumed()");
